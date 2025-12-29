@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 def part_one():
     data = open("input.txt").read().split("\n")
     data = [list(line) for line in data]
@@ -31,28 +33,26 @@ def part_one():
                     
     print(sum(row.count('X') for row in data))
 
-def part_two():
-    data = open("input.txt").read().split("\n")
-    data = [list(line) for line in data]
+data = open("input.txt").read().split("\n")
+data = [list(line) for line in data]
 
+def part_two():
     for i in range(len(data[2])):
         if data[2][i] == '^':
             start = i
             break
 
-    print(travel(data, 2, start-1) + travel(data, 2, start+1))
+    print(travel(2, start-1) + travel(2, start+1))
 
-def travel(data, current_row, curr_index):
-    #print(current_row, curr_index)
+@lru_cache(None)
+def travel(current_row, curr_index):
     if current_row >= len(data) - 1:
         return 1
+    
     else:
-        for i, row in enumerate(data):
-            if i < current_row:
-                continue
-
+        for i, row in enumerate(data[current_row+1:]):
             if row[curr_index] == '^':
-                return travel(data, i, curr_index-1) + travel(data, i, curr_index+1)
+                return travel(i+current_row+1, curr_index-1) + travel(i+current_row+1, curr_index+1)
     
     return 1
 
