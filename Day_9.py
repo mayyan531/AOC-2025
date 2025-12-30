@@ -8,16 +8,13 @@ def part_one():
             x_2, y_2 = map(int, coord_2.split(","))
             square_sizes.append((abs(x_1 - x_2) + 1) * (abs(y_1 - y_2) + 1))
     
-    print(max(square_sizes))
-
-part_one()
-
+    #print(max(square_sizes))
 
 input = open("input.txt").read().strip().split("\n")
+x = [int(i.split(",")[0]) for i in input]
+y = [int(i.split(",")[1]) for i in input]
 
 def part_two():
-    x = [int(i.split(",")[0]) for i in input]
-    y = [int(i.split(",")[1]) for i in input]
     rows = {}
 
     for i in range(len(x)): #track the edges formed by the coords
@@ -39,19 +36,30 @@ def part_two():
     
     for key in rows: #sort the rows
         rows[key] = sorted(list(rows[key]))
+    
+    rows[int(1534)] = []
 
     for key, item in get_largest_square_list().items():
+        print("\nTrying square with corners:", key, "size:", item)
         x1, y1 = x[key[0]], y[key[0]]
         x2, y2 = x[key[1]], y[key[1]]
+        print("Coords:", (x1, y1), (x2, y2))
         valid = True
+        swapped = False
 
         #check first coord
-        if y1 < y2 and x1 < x2: 
+        if (y1 < y2 and x1 < x2) or (y1 > y2 and x1 > x2): #top-left to bottom-right or bottom-right to top-left 
+            print("Coords are top left and bottom right")
+            if y2 < y1: #swap so always going top-left to bottom-right
+                x1, y1, x2, y2 = x2, y2, x1, y1
+                swapped = True
+
             curr = x1
             end = x2
             while curr < end:
+                print("checking top edge at", (curr, y1))
                 if curr+1 not in rows[y1]:
-                    if curr not in rows[y1-1]:
+                    if curr not in rows[y1-1] and curr!=x1:
                         valid = False
                         break
                     
@@ -61,61 +69,157 @@ def part_two():
                     
                     curr = rows[y1][rows[y1].index(curr)+1]
                     continue
-                curr += 1
+
+                curr = get_next_tile(swapped, curr_y = y1, key=key)
 
             if not valid: continue
 
             curr = y1
             end = y2
-            while curr < end:
-                if curr+1 not in rows:
+            while curr < end and valid:
+                print ("checking left edge at", (x1, curr))
+                if x1 not in rows[curr+1] and curr!=y1:
+                    print("gap")
+                    if x1-1 not in rows[curr]:
+                        valid = False
+                        break
+                    
+                    valid = False
+                    for row in rows.items():
+                        if row[0]>curr and x1 in row[1]:
+                            valid = True
+                            curr = row[0]
+                            break
+                    print("valid now", valid)
+                else:
+                    curr = get_next_tile(swapped, curr_x = x1, key=key)
 
             if not valid: continue
 
-            curr = x.index(x2)
-            end = x.index(x1)
-            while curr != end:
-                if rows[y2][curr-1] != rows[y2][curr] - 1:
-                    if curr not in rows[y1]:
+            curr = x2
+            end = x1
+            while curr > end:
+                print("checking bottom edge at", (curr, y2))
+                if curr-1 not in rows[y2]:
+                    if curr not in rows[y2+1] and curr!=x2:
                         valid = False
                         break
-                curr -= 1
-
-
-
-
-                
-
-    """ for key in rows: #fill in the gaps
-        gap = False
-        rows[key] = sorted(list(rows[key]))
-        to_add = []
-
-        for i in range(len(rows[key]) - 1):
-            if rows[key][i]+1 != rows[key][i+1] and not gap: #not sequential,its a gap or space inside
-                gap = True
-                for j in range(rows[key][i]+1, rows[key][i+1]):
-                    to_add.append(j)
-
-            if rows[key][i]+1 != rows[key][i+1] and gap:
-                gap=False
-                continue
-
-            elif rows[key][i]+1 == rows[key][i+1] and not gap:
-                start = i
-
-                while start + 1 < len(rows[key]):
-                    if rows[key][start]+1 == rows[key][start+1]:
-                        start += 1
-                    else:
+                    
+                    if rows[y2][0]==curr:
+                        valid = False
                         break
+                    
+                    curr = rows[y2][rows[y2].index(curr)-1]
+                    continue
+                curr = get_next_tile(swapped, curr_y = y2, key=key)
 
-                if start+2 < len(rows[key]) and rows[key][start+1]+1 == rows[key][start+2]: 
-                    gap = True
+            if not valid: continue
+
+            curr = y2
+            end = y1
+            while curr > end and valid:
+                print("checking right edge at", (x2, curr))
+                if x2 not in rows[curr-1]:
+                    if x2+1 not in rows[curr] and curr!=y2:
+                        valid = False
+                        break
+                    
+                    valid = False
+                    for row in rows.items():
+                        if row[0]<curr and x2 in row[1]:
+                            valid = True
+                            curr = row[0]
+                            break
                 else:
-                    gap = False
+                    curr = get_next_tile(swapped, curr_x = x2, key=key)
 
-        rows[key].extend(to_add) """
+        else:
+            if x2 < x1: #swap so always going top-right to bottom-left
+                x1, y1, x2, y2 = x2, y2, x1, y1
+                swapped = True
+            print("Coords are bottom left and top right")
+            curr = x1
+            end = x2
+            while curr < end:
+                print("checking bottom edge at", (curr, y1))
+                if curr+1 not in rows[y1]:
+                    print("there is a gap at", curr, y1)
+                    if curr not in rows[y1+1] and curr!=x1:
+                        print("goes up so invalid")
+                        valid = False
+                        break
+                    
+                    if rows[y1][-1]==curr:
+                        print("at the end so invalid")
+                        valid = False
+                        break
+                    
+                    curr = rows[y1][rows[y1].index(curr)+1]
+                    print("jumping to", curr, y1)
+                    continue
+                curr = get_next_tile(swapped, curr_y = y1, key=key)
+
+            if not valid: continue
+
+            curr = y1
+            end = y2
+            while curr > end and valid:
+                print ("checking left edge at", (x1, curr))
+                if x1 not in rows[curr-1]:
+                    if x1-1 not in rows[curr] and curr!=y1:
+                        valid = False
+                        break
+                    
+                    valid = False
+                    for row in rows.items():
+                        if row[0]<curr and x1 in row[1]:
+                            valid = True
+                            curr = row[0]
+                            break
+                else:
+                    curr = get_next_tile(swapped, curr_x = x1, key=key)
+            if not valid: continue
+
+            curr = x2
+            end = x1
+            while curr > end:
+                print("checking top edge at", (curr, y2))
+                if curr-1 not in rows[y2]:
+                    if curr not in rows[y2-1] and curr!=x2:
+                        valid = False
+                        break
+                    
+                    if rows[y2][0]==curr:
+                        valid = False
+                        break
+                    
+                    curr = rows[y2][rows[y2].index(curr)-1]
+                    continue
+                curr = get_next_tile(swapped, curr_y = y2, key=key)
+
+            if not valid: continue
+
+            curr = y2
+            end = y1
+            while curr < end and valid:
+                print("checking right edge at", (x2, curr))
+                if x2 not in rows[curr+1]:
+                    if x2+1 not in rows[curr] and curr!=y2:
+                        valid = False
+                        break
+                    
+                    valid = False
+                    for row in rows.items():
+                        if row[0]>curr and x2 in row[1]:
+                            valid = True
+                            curr = row[0]
+                            break
+                else:
+                    curr = get_next_tile(swapped, curr_x = x2, key=key)
+
+        if valid: 
+            print(item)
+            return
 
 def get_largest_square_list():
     square_sizes = {}
@@ -129,4 +233,16 @@ def get_largest_square_list():
     square_sizes = dict(sorted(square_sizes.items(), key=lambda item: item[1], reverse=True))
     return square_sizes
 
-get_largest_square_list()
+def get_next_tile(swapped, key, curr_y=None, curr_x=None):
+    if curr_x is not None:
+        if swapped:
+            return y[key[1]+1] if x[key[1]+1] == curr_x else y[key[1]-1]
+        else:
+            return y[key[0]+1] if x[key[0]+1] == curr_x else y[key[0]-1]
+    if curr_y is not None:
+        if swapped:
+            return x[key[1]+1] if y[key[1]+1] == curr_y else x[key[1]-1]
+        else:
+            return x[key[0]+1] if y[key[0]+1] == curr_y else x[key[0]-1]
+            
+part_two()
