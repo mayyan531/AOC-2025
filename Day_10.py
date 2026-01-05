@@ -42,4 +42,19 @@ def part_one():
     
     return number_of_presses
 
-print(part_one())
+#print(part_one())
+
+def part_two():
+    data = open("input.txt").read().strip().split("\n")
+    buttons = [[re.sub(r'^[(]|[)]$', '', b).split(',') for b in part] for part in (line.split(' {')[0].split("] ")[-1].split() for line in data)] #splitting the buttons then removing () then splitting into lists by ,
+    joltages = [[int(i) for i in line.split(' {')[-1].strip('}').split(',')] for line in data]
+
+    for joltage, button_set in zip(joltages, buttons):
+        buttons_with_this_counter = []
+
+        for counter in range(len(joltage)):
+            buttons_with_this_counter.append([idx for idx, num in enumerate(button_set) if str(counter) in num])
+
+        for i in range(1, len(bu))
+
+print(part_two())
