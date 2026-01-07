@@ -1,5 +1,6 @@
 import itertools
 import re
+from functools import lru_cache
 
 def part_one():
     data = open("input.txt").read().strip().split("\n")
@@ -55,6 +56,7 @@ def part_two():
     joltages = [[int(i) for i in line.split(' {')[-1].strip('}').split(',')] for line in data]
 
     for joltage, button_set in zip(joltages, buttons):
+        print("\nJoltage set:", joltage)
         for counter in range(len(joltage)):
             buttons_with_this_counter.append([idx for idx, num in enumerate(button_set) if str(counter) in num])
 
@@ -67,10 +69,10 @@ def part_two():
 
             combination_to_make_counter.append(combinations)
         
-        print(combination_to_make_counter)
+        #print(combination_to_make_counter)
 
         for combo in combination_to_make_counter[0]:
-            determine_valid(combo, 1)
+            determine_valid(tuple(combo), 1)
 
         total_presses += min(presses)
         presses.clear()
@@ -78,15 +80,18 @@ def part_two():
         combination_to_make_counter.clear()
     return total_presses
 
+@lru_cache(maxsize=None)
 def determine_valid(current_combo, counter_number):
-    print("\niteration:", counter_number, "current combo:", current_combo)
+    current_combo = list(current_combo)
+    #print("\niteration:", counter_number, "current combo:", current_combo)
     if counter_number == len(combination_to_make_counter):
-        print("  valid combo found:", current_combo)
+        #print("  valid combo found:", current_combo)
         presses.append(len(current_combo))
         return
 
     for combo in combination_to_make_counter[counter_number]:
-        print("considering combo:", combo)
+        #print("considering combo:", combo)
+        valid = True
         new_combo = current_combo.copy()
         for button in combo:
             if button not in new_combo:
@@ -98,14 +103,16 @@ def determine_valid(current_combo, counter_number):
                     for _ in range(b - c):
                         new_combo.append(int(button))
 
-        print("  checking combo", new_combo)
+        #print("  checking combo", new_combo)
 
         for i in range(counter_number):
             jolt = len(combination_to_make_counter[i][0])
             if sum(1 for b in new_combo if b in buttons_with_this_counter[i]) > jolt:
-                print("    invalid combo, too many buttons for counter", i ,"needed:", jolt, "found:", sum(1 for b in new_combo if b in buttons_with_this_counter[i]))
-                return
-        
-        determine_valid(new_combo, counter_number+1)
+                #print("    invalid combo, too many buttons for counter", i ,"needed:", jolt, "found:", sum(1 for b in new_combo if b in buttons_with_this_counter[i]))
+                valid = False
+                break
+
+        if valid:
+            determine_valid(tuple(new_combo), counter_number+1)
 
 print(part_two())
