@@ -1,6 +1,5 @@
-import itertools
+import pulp as p
 import re
-from functools import lru_cache
 
 def part_one():
     data = open("input.txt").read().strip().split("\n")
@@ -45,7 +44,8 @@ def part_one():
     return number_of_presses
 
 #print(part_one())
-presses = []
+
+""" presses = []
 buttons_with_this_counter = []
 combination_to_make_counter = []
 
@@ -80,7 +80,6 @@ def part_two():
         combination_to_make_counter.clear()
     return total_presses
 
-@lru_cache(maxsize=None)
 def determine_valid(current_combo, counter_number):
     current_combo = list(current_combo)
     #print("\niteration:", counter_number, "current combo:", current_combo)
@@ -113,6 +112,35 @@ def determine_valid(current_combo, counter_number):
                 break
 
         if valid:
-            determine_valid(tuple(new_combo), counter_number+1)
+            determine_valid(tuple(new_combo), counter_number+1) """
+
+def part_two():
+    total_presses = 0
+    data = open("input.txt").read().strip().split("\n")
+    buttons = [[re.sub(r'^[(]|[)]$', '', b).split(',') for b in part] for part in (line.split(' {')[0].split("] ")[-1].split() for line in data)] #splitting the buttons then removing () then splitting into lists by ,
+    joltages = [[int(i) for i in line.split(' {')[-1].strip('}').split(',')] for line in data]
+
+    for joltage, button_set in zip(joltages, buttons):
+        total_presses += solve_with_lp(joltage, button_set)
+
+    return total_presses
+
+def solve_with_lp(joltage, button_set):
+    buttons_with_this_counter = {} #stores index of counter as key and list of buttons that can inc it as values
+
+    for counter in range(len(joltage)):
+        buttons_with_this_counter[counter] = ([idx for idx, num in enumerate(button_set) if str(counter) in num])
+
+    lp_problem = p.LpProblem("Minimize Button Presses", p.LpMinimize)
+    button_vars = [p.LpVariable(f'button_{i}', lowBound=0, cat='Integer') for i in range(len(button_set))]
+    lp_problem += p.lpSum(button_vars)
+
+    for counter, buttons in buttons_with_this_counter.items():
+        lp_problem += p.lpSum([button_vars[b] for b in buttons]) == joltage[counter]
+    
+    lp_problem.solve()
+
+    print("Button Presses:", p.value(lp_problem.objective))
+    return p.value(lp_problem.objective)
 
 print(part_two())
