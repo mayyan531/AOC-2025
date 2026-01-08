@@ -1,0 +1,39 @@
+import re
+
+def part_one():
+    data = open("input.txt").read().splitlines()
+    shapes = [i for i in range(len(data)) if re.match(r"\d:", data[i])] # Find lines that start with a digit followed by a colon for the shapes
+    shape_dict = {}
+    valid_regions = 0
+    #print(data)
+
+    for index in shapes:
+        print(f"Shape found at line {index}: {data[index]}")
+        shape = []
+        matrix = []
+
+        for i in range(index + 1, index+4):
+            shape = [*shape, *[(i - index-1, y) for y, char in enumerate(data[i]) if char == '#']]
+            matrix.append(list(data[i]))
+        
+        shape_dict[data[index]] = [shape]
+
+        for i in range(3):
+            shape = []
+            new_matrix = []
+            for col in range(3):
+                shape = [*shape, *[(col, j) for j in range(3) if matrix[2-j][col] == '#']]
+                new_matrix.append([matrix[j][col] for j in range(2, -1, -1)])
+
+            matrix = new_matrix
+            shape_dict[data[index]].append(shape)
+
+    for region in [i for i in range(shapes[-1], len(data)) if re.match(r"\d*x\d*:", data[i])]:
+        gifts = data[region].split(":")[1].strip().split(" ")
+        width, height = map(int, re.match(r"(\d*)x(\d*):", data[region]).groups())
+        
+        check_gift()
+
+
+def check_gift(placed_gifts_pairs, gift_shape_index, gift_shape_placed, width, height, gifts, shape_dict):
+part_one()
