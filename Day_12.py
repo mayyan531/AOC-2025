@@ -7,10 +7,8 @@ def part_one():
     global shape_dict
     shape_dict = {}
     valid_regions = 0
-    ##print(data)
 
     for index in shapes:
-        #print(f"Shape found at line {index}: {data[index]}")
         shape = []
         matrix = []
 
@@ -34,38 +32,36 @@ def part_one():
         global gifts
         gifts = data[region].split(":")[1].strip().split(" ")
         width, height = map(int, re.match(r"(\d*)x(\d*):", data[region]).groups())
+
+        total_gifts = sum(len(shape_dict[i][0])*int(x) for i, x in enumerate(gifts) if int(x) > 0)
+        print("Total gifts area:", total_gifts, "Region area:", width*height)
+        if total_gifts > width * height:
+            continue
         
-        #print("\nchecking region:", data[region])
-        valid_regions += check_gift(frozenset(), 0, 0, width, height)
+        print("checking region:\n", data[region])
+        valid_regions += check_gift(frozenset(), 0, 0, width, height, region)
 
     print("Number of valid regions:", valid_regions)
 
 @lru_cache(maxsize=None)
-def check_gift(placed_gifts_locations, gift_shape_index, gift_shape_placed, width, height):
-    #print(f"Checking gift shape index {gift_shape_index} with {gift_shape_placed} placed so far. Current placements: {placed_gifts_locations}")
+def check_gift(placed_gifts_locations, gift_shape_index, gift_shape_placed, width, height, region):
+    
     if gift_shape_index == len(gifts)-1 and gift_shape_placed == int(gifts[gift_shape_index]):
-        #print("  valid arrangement found with placements:", placed_gifts_locations)
         return 1
     
     else:
         while gift_shape_placed == int(gifts[gift_shape_index]):
             if gift_shape_index == len(gifts)-1:
-                #print("  valid arrangement found with placements:", placed_gifts_locations)
                 return 1
             
-            #print("Moving to next gift shape")
             gift_shape_index += 1
             gift_shape_placed = 0
 
 
         for rotation in shape_dict[gift_shape_index]:
-            #print(f"\nTrying rotation for gift shape {gift_shape_index}: {rotation}")
             for x in range(width):
                 for y in range(height):
-                    #print(f"Trying to place gift shape {gift_shape_index} rotation at ({x},{y})")
                     new_rotation = [(x+dx, y+dy) for dx, dy in rotation]
-
-                    #print("  New placed gifts locations:", new_placed_gifts_locations)
 
                     if any(
                         dx >= width or dy >= height or (dx,dy) in placed_gifts_locations
@@ -74,13 +70,9 @@ def check_gift(placed_gifts_locations, gift_shape_index, gift_shape_placed, widt
                         continue
 
                     new_placed_gifts_locations = placed_gifts_locations | frozenset(new_rotation)
-                        #print("  Placement valid, continuing to next placement\n")
-                    if check_gift(new_placed_gifts_locations, gift_shape_index, gift_shape_placed+1, width, height) == 1:
+                    if check_gift(new_placed_gifts_locations, gift_shape_index, gift_shape_placed+1, width, height, region) == 1:
                         return 1
-                        
-                    #print("  Placement invalid, trying next position")
-        
-        #print("No valid placements found for this configuration \n")
+                                
         return 0
                                 
 part_one()
